@@ -26,6 +26,40 @@ const ACCEPTED_TYPES = [
   ".xlsx",
 ];
 
+const TEXT_EXTENSIONS = [".txt", ".md", ".csv", ".html", ".htm", ".xml", ".json", ".rtf"];
+
+async function extractText(file: File): Promise<string> {
+  const ext = "." + file.name.split(".").pop()?.toLowerCase();
+
+  // Text-based files: read directly
+  if (TEXT_EXTENSIONS.includes(ext)) {
+    const text = await file.text();
+    // Strip HTML tags if HTML file
+    if (ext === ".html" || ext === ".htm" || ext === ".xml") {
+      return text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    }
+    return text;
+  }
+
+  // For binary files (PDF, DOCX, etc.): attempt text read, validate content
+  try {
+    const raw = await file.text();
+    // Check if the content looks like readable text (not binary garbage)
+    const sample = raw.slice(0, 500);
+    const printableRatio =
+      (sample.match(/[\x20-\x7E\uAC00-\uD7AF\u3040-\u30FF\u4E00-\u9FFF\n\r\t]/g)?.length ?? 0) /
+      sample.length;
+
+    if (printableRatio > 0.7 && raw.length > 0) {
+      return raw;
+    }
+  } catch {
+    // ignore read errors
+  }
+
+  return `[${file.name}] 이 파일 형식은 바이너리 파싱이 필요합니다.\n\n현재 지원되는 파일: .txt, .md, .csv, .html, .json\nPDF/DOCX 파일은 별도 파서 라이브러리(pdf-parse, mammoth 등)가 필요합니다.`;
+}
+
 export default function DocumentTranslator() {
   const [sourceLang, setSourceLang] = useState("auto");
   const [targetLang, setTargetLang] = useState("en");
@@ -77,19 +111,24 @@ export default function DocumentTranslator() {
 
     setIsLoading(true);
     try {
-      // Read text from the file (works for text-based files)
-      const fileText = await selectedFile.text();
-      const textContent = fileText && !/[\x00-\x08\x0E-\x1F]/.test(fileText.slice(0, 200))
-        ? fileText
-        : `[${selectedFile.name}] 바이너리 파일은 텍스트 추출이 필요합니다. 현재 텍스트 기반 파일(.txt, .md, .csv, .html, .json)을 지원합니다.`;
+      const textContent = await extractText(selectedFile);
+
+      if (!textContent.trim()) {
+        setTranslatedText("파일에서 텍스트를 추출할 수 없습니다.");
+        setIsLoading(false);
+        return;
+      }
 
       setOriginalText(textContent);
 
       const result = await translateLongText(textContent, sourceLang, targetLang);
       setTranslatedText(result.translatedText);
       setPageCount(Math.max(1, Math.ceil(textContent.length / 2000)));
-    } catch {
-      setTranslatedText("문서 번역 중 오류가 발생했습니다.");
+    } catch (e) {
+      console.error("Document translation error:", e);
+      setTranslatedText(
+        "문서 번역 중 오류가 발생했습니다. 텍스트 기반 파일(.txt, .md, .csv, .html)을 사용해 주세요."
+      );
     } finally {
       setIsLoading(false);
     }

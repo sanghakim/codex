@@ -9,12 +9,20 @@ export async function translateText(
   targetLang: string
 ): Promise<{ translatedText: string; detectedLanguage: string }> {
   const sl = sourceLang === "auto" ? "auto" : sourceLang;
+
+  // Use POST to avoid URL length limits with large texts
   const url =
     `https://translate.googleapis.com/translate_a/single` +
-    `?client=gtx&sl=${encodeURIComponent(sl)}&tl=${encodeURIComponent(targetLang)}` +
-    `&dt=t&q=${encodeURIComponent(text)}`;
+    `?client=gtx&sl=${encodeURIComponent(sl)}&tl=${encodeURIComponent(targetLang)}&dt=t`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: `q=${encodeURIComponent(text)}`,
+  });
+
   if (!res.ok) throw new Error(`Translation API error: ${res.status}`);
 
   const data = await res.json();
@@ -38,7 +46,7 @@ export async function translateLongText(
   sourceLang: string,
   targetLang: string
 ): Promise<{ translatedText: string; detectedLanguage: string }> {
-  const chunks = splitIntoChunks(text, 4500);
+  const chunks = splitIntoChunks(text, 3000);
   const results: string[] = [];
   let detectedLanguage = sourceLang;
 
