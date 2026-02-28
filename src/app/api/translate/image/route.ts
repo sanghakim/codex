@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockTranslateImage } from "@/lib/mock-translator";
+import { translateImageText } from "@/lib/translator";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,15 +15,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await mockTranslateImage(sourceLang, targetLang);
+    // In production, use an OCR service (e.g. Google Vision, Tesseract)
+    // to extract text from the image. For now we return a guidance message.
+    const extractedText =
+      "[OCR 미연동] 이미지에서 텍스트를 추출하려면 Google Vision API 또는 Tesseract OCR 연동이 필요합니다.";
+
+    const result = await translateImageText(
+      extractedText,
+      sourceLang === "auto" ? "ko" : sourceLang,
+      targetLang
+    );
 
     return NextResponse.json({
       extractedText: result.extractedText,
       translatedText: result.translatedText,
     });
-  } catch {
+  } catch (e) {
     return NextResponse.json(
-      { error: "Image translation failed" },
+      { error: `Image translation failed: ${e instanceof Error ? e.message : "unknown"}` },
       { status: 500 }
     );
   }

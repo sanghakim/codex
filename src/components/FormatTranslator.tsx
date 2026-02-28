@@ -4,6 +4,12 @@ import { useState } from "react";
 import LanguageSelector from "./LanguageSelector";
 import SwapButton from "./SwapButton";
 import { SUPPORTED_LANGUAGES, TARGET_LANGUAGES } from "@/lib/languages";
+import {
+  translateText,
+  translateMarkup,
+  translateJson,
+  translateCsv,
+} from "@/lib/translate-client";
 import { Loader2, Copy, Code, FileCode } from "lucide-react";
 
 type FormatType = "html" | "markdown" | "json" | "xml" | "csv";
@@ -75,18 +81,26 @@ export default function FormatTranslator() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/translate/format", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: sourceContent,
-          format,
-          sourceLang,
-          targetLang,
-        }),
-      });
-      const data = await res.json();
-      setTranslatedContent(data.translatedContent);
+      let result: string;
+      switch (format) {
+        case "html":
+        case "xml":
+          result = await translateMarkup(sourceContent, sourceLang, targetLang);
+          break;
+        case "json":
+          result = await translateJson(sourceContent, sourceLang, targetLang);
+          break;
+        case "csv":
+          result = await translateCsv(sourceContent, sourceLang, targetLang);
+          break;
+        case "markdown":
+        default: {
+          const res = await translateText(sourceContent, sourceLang, targetLang);
+          result = res.translatedText;
+          break;
+        }
+      }
+      setTranslatedContent(result);
     } catch {
       setTranslatedContent("서식 번역 중 오류가 발생했습니다.");
     } finally {

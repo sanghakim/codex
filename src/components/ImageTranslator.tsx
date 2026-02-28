@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import LanguageSelector from "./LanguageSelector";
 import SwapButton from "./SwapButton";
 import { SUPPORTED_LANGUAGES, TARGET_LANGUAGES } from "@/lib/languages";
+import { translateText } from "@/lib/translate-client";
 import { Upload, Image as ImageIcon, Loader2, Copy, X } from "lucide-react";
 
 export default function ImageTranslator() {
@@ -46,18 +47,18 @@ export default function ImageTranslator() {
 
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("image", selectedImage);
-      formData.append("sourceLang", sourceLang);
-      formData.append("targetLang", targetLang);
+      // In production, use an OCR service (Google Vision, Tesseract.js, etc.)
+      // For demo: we show a message that OCR is needed for real image text extraction
+      const demoExtracted =
+        "이미지에서 텍스트를 추출하려면 OCR 서비스(Google Vision API, Tesseract.js 등)를 연동해야 합니다.\n\n이 데모에서는 샘플 텍스트를 번역합니다:\n안녕하세요. 다국어 번역 서비스에 오신 것을 환영합니다.";
+      setExtractedText(demoExtracted);
 
-      const res = await fetch("/api/translate/image", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      setExtractedText(data.extractedText);
-      setTranslatedText(data.translatedText);
+      const result = await translateText(
+        demoExtracted,
+        sourceLang === "auto" ? "ko" : sourceLang,
+        targetLang
+      );
+      setTranslatedText(result.translatedText);
     } catch {
       setTranslatedText("이미지 번역 중 오류가 발생했습니다.");
     } finally {

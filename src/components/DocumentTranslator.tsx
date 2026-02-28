@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import LanguageSelector from "./LanguageSelector";
 import SwapButton from "./SwapButton";
 import { SUPPORTED_LANGUAGES, TARGET_LANGUAGES } from "@/lib/languages";
+import { translateLongText } from "@/lib/translate-client";
 import {
   Upload,
   FileText,
@@ -76,19 +77,17 @@ export default function DocumentTranslator() {
 
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("document", selectedFile);
-      formData.append("sourceLang", sourceLang);
-      formData.append("targetLang", targetLang);
+      // Read text from the file (works for text-based files)
+      const fileText = await selectedFile.text();
+      const textContent = fileText && !/[\x00-\x08\x0E-\x1F]/.test(fileText.slice(0, 200))
+        ? fileText
+        : `[${selectedFile.name}] 바이너리 파일은 텍스트 추출이 필요합니다. 현재 텍스트 기반 파일(.txt, .md, .csv, .html, .json)을 지원합니다.`;
 
-      const res = await fetch("/api/translate/document", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      setOriginalText(data.originalText);
-      setTranslatedText(data.translatedText);
-      setPageCount(data.pageCount);
+      setOriginalText(textContent);
+
+      const result = await translateLongText(textContent, sourceLang, targetLang);
+      setTranslatedText(result.translatedText);
+      setPageCount(Math.max(1, Math.ceil(textContent.length / 2000)));
     } catch {
       setTranslatedText("문서 번역 중 오류가 발생했습니다.");
     } finally {

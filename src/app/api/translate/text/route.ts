@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockTranslateText } from "@/lib/mock-translator";
+import { translateText } from "@/lib/translator";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await mockTranslateText(
+    const result = await translateText(
       text,
       sourceLang || "auto",
       targetLang
@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
       translatedText: result.translatedText,
       detectedLanguage: result.detectedLanguage,
     });
-  } catch {
+  } catch (e) {
     return NextResponse.json(
-      { error: "Translation failed" },
+      { error: `Translation failed: ${e instanceof Error ? e.message : "unknown"}` },
       { status: 500 }
     );
   }

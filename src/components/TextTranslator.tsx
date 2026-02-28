@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import LanguageSelector from "./LanguageSelector";
 import SwapButton from "./SwapButton";
 import { SUPPORTED_LANGUAGES, TARGET_LANGUAGES } from "@/lib/languages";
+import { translateText } from "@/lib/translate-client";
 import { Copy, Volume2, Loader2, X } from "lucide-react";
 
 export default function TextTranslator() {
@@ -22,19 +23,10 @@ export default function TextTranslator() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/translate/text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: sourceText,
-          sourceLang,
-          targetLang,
-        }),
-      });
-      const data = await res.json();
-      setTranslatedText(data.translatedText);
-      if (data.detectedLanguage) {
-        setDetectedLang(data.detectedLanguage);
+      const result = await translateText(sourceText, sourceLang, targetLang);
+      setTranslatedText(result.translatedText);
+      if (result.detectedLanguage) {
+        setDetectedLang(result.detectedLanguage);
       }
     } catch {
       setTranslatedText("번역 중 오류가 발생했습니다. 다시 시도해 주세요.");

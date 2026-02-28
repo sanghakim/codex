@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockTranslateFormat } from "@/lib/mock-translator";
+import { translateFormat } from "@/lib/translator";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const translatedContent = await mockTranslateFormat(
+    const translatedContent = await translateFormat(
       content,
       format,
       sourceLang || "auto",
@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
       translatedContent,
       format,
     });
-  } catch {
+  } catch (e) {
     return NextResponse.json(
-      { error: "Format translation failed" },
+      { error: `Format translation failed: ${e instanceof Error ? e.message : "unknown"}` },
       { status: 500 }
     );
   }
