@@ -2,6 +2,7 @@
  * OCR text extraction using Tesseract.js.
  * Server-side only (Node.js).
  */
+import * as Tesseract from "tesseract.js";
 
 // Map our language codes to Tesseract language codes
 const LANG_MAP: Record<string, string> = {
@@ -36,19 +37,7 @@ export async function extractTextFromImage(
   imageBuffer: Buffer,
   sourceLang: string
 ): Promise<string> {
-  // Dynamic import hidden from Turbopack static analysis
-  const moduleName = "tesseract.js";
-  const Tesseract = await import(/* webpackIgnore: true */ moduleName) as {
-    default?: { recognize: (image: Buffer, lang: string) => Promise<{ data: { text: string } }> };
-    recognize?: (image: Buffer, lang: string) => Promise<{ data: { text: string } }>;
-  };
-
-  const recognize = Tesseract.default?.recognize ?? Tesseract.recognize;
-  if (!recognize) {
-    throw new Error("Failed to load tesseract.js");
-  }
-
   const tessLang = getTesseractLang(sourceLang);
-  const { data } = await recognize(imageBuffer, tessLang);
+  const { data } = await Tesseract.recognize(imageBuffer, tessLang);
   return data.text.trim();
 }
