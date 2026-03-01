@@ -1,12 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock external modules before imports
-vi.mock("tesseract.js", () => ({
-  default: {
-    recognize: vi.fn().mockResolvedValue({
-      data: { text: "OCR extracted text" },
-    }),
-  },
+vi.mock("@/lib/ocr", () => ({
+  extractTextFromImage: vi.fn().mockResolvedValue("OCR extracted text"),
 }));
 
 vi.mock("@/lib/translator", () => ({

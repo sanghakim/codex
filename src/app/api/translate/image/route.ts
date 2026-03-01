@@ -1,31 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import Tesseract from "tesseract.js";
 import { translateImageText } from "@/lib/translator";
-
-// Map our language codes to Tesseract language codes
-const LANG_MAP: Record<string, string> = {
-  auto: "eng+kor+jpn+chi_sim",
-  ko: "kor",
-  en: "eng",
-  ja: "jpn",
-  zh: "chi_sim",
-  "zh-TW": "chi_tra",
-  es: "spa",
-  fr: "fra",
-  de: "deu",
-  pt: "por",
-  ru: "rus",
-  ar: "ara",
-  hi: "hin",
-  th: "tha",
-  vi: "vie",
-  id: "ind",
-  it: "ita",
-  nl: "nld",
-  pl: "pol",
-  tr: "tur",
-  sv: "swe",
-};
+import { extractTextFromImage } from "@/lib/ocr";
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,17 +16,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert File to Buffer for Tesseract
+    // Convert File to Buffer for Tesseract OCR
     const arrayBuffer = await image.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Determine Tesseract language
-    const tessLang = LANG_MAP[sourceLang] || "eng+kor+jpn+chi_sim";
-
     // Perform OCR using Tesseract.js
-    const { data } = await Tesseract.recognize(buffer, tessLang);
-
-    const extractedText = data.text.trim();
+    const extractedText = await extractTextFromImage(buffer, sourceLang);
 
     if (!extractedText) {
       return NextResponse.json({
