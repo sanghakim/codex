@@ -1,6 +1,7 @@
 "use client";
 
-import { Languages } from "lucide-react";
+import Link from "next/link";
+import { Languages, BarChart3 } from "lucide-react";
 
 export default function Header() {
   return (
@@ -20,6 +21,14 @@ export default function Header() {
             <span>20+ 언어 지원</span>
             <span className="w-1 h-1 bg-gray-300 rounded-full" />
             <span>텍스트 · 이미지 · 문서 · 서식</span>
+            <span className="w-1 h-1 bg-gray-300 rounded-full" />
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+            >
+              <BarChart3 className="w-4 h-4" />
+              대시보드
+            </Link>
           </nav>
         </div>
       </div>

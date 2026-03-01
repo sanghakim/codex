@@ -5,6 +5,7 @@ import LanguageSelector from "./LanguageSelector";
 import SwapButton from "./SwapButton";
 import { SUPPORTED_LANGUAGES, TARGET_LANGUAGES } from "@/lib/languages";
 import { translateText } from "@/lib/translate-client";
+import { trackTranslation } from "@/lib/usage-tracker";
 import { Copy, Volume2, Loader2, X } from "lucide-react";
 
 export default function TextTranslator() {
@@ -28,6 +29,12 @@ export default function TextTranslator() {
       if (result.detectedLanguage) {
         setDetectedLang(result.detectedLanguage);
       }
+      trackTranslation({
+        type: "text",
+        sourceLang: result.detectedLanguage || sourceLang,
+        targetLang,
+        charCount: sourceText.length,
+      });
     } catch {
       setTranslatedText("번역 중 오류가 발생했습니다. 다시 시도해 주세요.");
     } finally {

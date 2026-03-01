@@ -10,6 +10,7 @@ import {
   translateJson,
   translateCsv,
 } from "@/lib/translate-client";
+import { trackTranslation } from "@/lib/usage-tracker";
 import { Loader2, Copy, Code, FileCode } from "lucide-react";
 
 type FormatType = "html" | "markdown" | "json" | "xml" | "csv";
@@ -101,6 +102,13 @@ export default function FormatTranslator() {
         }
       }
       setTranslatedContent(result);
+      trackTranslation({
+        type: "format",
+        sourceLang,
+        targetLang,
+        charCount: sourceContent.length,
+        formatType: format,
+      });
     } catch {
       setTranslatedContent("서식 번역 중 오류가 발생했습니다.");
     } finally {

@@ -5,6 +5,7 @@ import LanguageSelector from "./LanguageSelector";
 import SwapButton from "./SwapButton";
 import { SUPPORTED_LANGUAGES, TARGET_LANGUAGES } from "@/lib/languages";
 import { translateLongText } from "@/lib/translate-client";
+import { trackTranslation } from "@/lib/usage-tracker";
 import {
   Upload,
   FileText,
@@ -120,6 +121,13 @@ export default function DocumentTranslator() {
       setLoadingStatus("번역 중...");
       const result = await translateLongText(textContent, sourceLang, targetLang);
       setTranslatedText(result.translatedText);
+      trackTranslation({
+        type: "document",
+        sourceLang,
+        targetLang,
+        charCount: textContent.length,
+        fileName: selectedFile.name,
+      });
     } catch (e) {
       console.error("Document translation error:", e);
       setTranslatedText("문서 번역 중 오류가 발생했습니다.");
