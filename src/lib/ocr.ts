@@ -36,15 +36,19 @@ export async function extractTextFromImage(
   imageBuffer: Buffer,
   sourceLang: string
 ): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const Tesseract = require("tesseract.js") as {
-    recognize: (
-      image: Buffer,
-      lang: string
-    ) => Promise<{ data: { text: string } }>;
+  // Dynamic import hidden from Turbopack static analysis
+  const moduleName = "tesseract.js";
+  const Tesseract = await import(/* webpackIgnore: true */ moduleName) as {
+    default?: { recognize: (image: Buffer, lang: string) => Promise<{ data: { text: string } }> };
+    recognize?: (image: Buffer, lang: string) => Promise<{ data: { text: string } }>;
   };
 
+  const recognize = Tesseract.default?.recognize ?? Tesseract.recognize;
+  if (!recognize) {
+    throw new Error("Failed to load tesseract.js");
+  }
+
   const tessLang = getTesseractLang(sourceLang);
-  const { data } = await Tesseract.recognize(imageBuffer, tessLang);
+  const { data } = await recognize(imageBuffer, tessLang);
   return data.text.trim();
 }
